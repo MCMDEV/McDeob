@@ -25,7 +25,7 @@ import java.time.Duration;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class Processor {
 
-    private final Version version;
+    private final Task task;
     private final boolean decompile;
     private final App app;
 
@@ -40,8 +40,8 @@ public class Processor {
 
     private Path DATA_FOLDER_PATH = Paths.get(".", "deobf-work");
 
-    public Processor(Version version, boolean decompile, App app) {
-        this.version = version;
+    public Processor(Task task, boolean decompile, App app) {
+        this.task = task;
         this.app = app;
         if (Util.isRunningMacOS()) {
             // If running on macOS, put the decompile folder in the user's home folder
@@ -54,9 +54,9 @@ public class Processor {
             } catch (IOException ignore) {}
         }
 
-        MINECRAFT_JAR_NAME = String.format("minecraft_%s_%s.jar", version.getType().getName(), version.getVersion());
-        MAPPINGS_NAME = String.format("mappings_%s_%s.txt", version.getType().getName(), version.getVersion());
-        MAPPED_JAR_NAME = String.format("remapped_%s_%s.jar", version.getType().getName(), version.getVersion());
+        MINECRAFT_JAR_NAME = String.format("minecraft_%s_%s.jar", task.getTaskType().name(), task.getVersion().getName());
+        MAPPINGS_NAME = String.format("mappings_%s_%s.txt", task.getTaskType().name(), task.getVersion().getName());
+        MAPPED_JAR_NAME = String.format("remapped_%s_%s.jar", task.getTaskType().name(), task.getVersion().getName());
         this.decompile = decompile;
         this.reconstruct = new Reconstruct(app);
     }
@@ -103,7 +103,7 @@ public class Processor {
             JAR_FILE.delete();
         }
         JAR_FILE.createNewFile();
-        URL jar_url = new URL(version.getJar());
+        URL jar_url = new URL(task.getJar());
         OutputStream jar_out = new BufferedOutputStream(new FileOutputStream(JAR_FILE));
         URLConnection connection = jar_url.openConnection();
         InputStream inputStream = connection.getInputStream();
@@ -133,7 +133,7 @@ public class Processor {
         }
         MAPPINGS_FILE.createNewFile();
 
-        URL mapping_url = new URL(version.getMappings());
+        URL mapping_url = new URL(task.getMappings());
         OutputStream mapping_out = new BufferedOutputStream(new FileOutputStream(MAPPINGS_FILE));
         URLConnection connection = mapping_url.openConnection();
         InputStream inputStream = connection.getInputStream();
@@ -167,7 +167,7 @@ public class Processor {
                 JCommander.newBuilder()
                         .addObject(reconstruct.getArguments())
                         .build()
-                        .parse(version.getType() == Version.Type.SERVER ? serverArgs : clientArgs);
+                        .parse(task.getTaskType() == Task.TaskType.SERVER ? serverArgs : clientArgs);
             } catch (Exception ex) {
                 reconstruct.getLogger().error("Encountered an error while parsing arguments", ex);
                 if (app != null) {

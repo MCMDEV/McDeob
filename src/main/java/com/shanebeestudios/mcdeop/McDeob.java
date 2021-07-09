@@ -49,31 +49,34 @@ public class McDeob {
         String typeString = (String) options.valueOf("type");
 
         try {
-            Version.Type.valueOf(typeString.toUpperCase());
+            Task.TaskType.valueOf(typeString.toUpperCase());
         } catch (IllegalArgumentException e) {
             Logger.error("Invalid type specified, shutting down...");
             System.exit(1);
         }
 
-        Version.Type type = Version.Type.valueOf(typeString.toUpperCase());
-        Version version = Version.getByVersion(versionString, type);
-        if (version == null) {
-            Logger.error("Invalid or unsupported version was specified, shutting down...");
-            System.exit(1);
-        }
+        Task.TaskType taskType = Task.TaskType.valueOf(typeString.toUpperCase());
+        Version.loadVersions().thenAccept(versions -> {
+            Version version = Version.getByName(versions, versionString);
+            Task task = new Task(version, taskType);
+            if (version == null) {
+                Logger.error("Invalid or unsupported version was specified, shutting down...");
+                System.exit(1);
+            }
 
-        boolean decompile = false;
-        if (options.has("decompile")) {
-            decompile = true;
-        }
+            boolean decompile = false;
+            if (options.has("decompile")) {
+                decompile = true;
+            }
 
-        boolean finalDecompile = decompile;
+            boolean finalDecompile = decompile;
 
-        Thread processorThread = new Thread(() -> {
-            Processor processor = new Processor(version, finalDecompile, null);
-            processor.init();
-        }, "Processor");
-        processorThread.start();
+            Thread processorThread = new Thread(() -> {
+                Processor processor = new Processor(task, finalDecompile, null);
+                processor.init();
+            }, "Processor");
+            processorThread.start();
+        });
     }
 
 }

@@ -2,6 +2,7 @@ package com.shanebeestudios.mcdeop.app;
 
 import com.apple.eawt.Application;
 import com.shanebeestudios.mcdeop.Processor;
+import com.shanebeestudios.mcdeop.Task;
 import com.shanebeestudios.mcdeop.Version;
 import com.shanebeestudios.mcdeop.util.Util;
 
@@ -17,7 +18,7 @@ public class App extends JFrame {
     private JRadioButton server;
     private JRadioButton client;
     private JCheckBox decompile;
-    private JComboBox<String> versionBox;
+    private JComboBox<Version> versionBox;
     private JTextField statusBox;
 
     public App() {
@@ -86,12 +87,7 @@ public class App extends JFrame {
 
     private void createVersionPopup() {
         versionBox = new JComboBox();
-        versionBox.addItem("Choose Minecraft Version");
-        for (Version version : Version.values()) {
-            if (version.getType() == Version.Type.SERVER) {
-                versionBox.addItem(version.getVersion());
-            }
-        }
+        Version.loadVersions().thenAccept(versions -> versions.forEach(version -> versionBox.addItem(version)));
         versionBox.setBounds((getSize().width / 2) - 110, 95, 220, 20);
         add(versionBox);
     }
@@ -156,12 +152,12 @@ public class App extends JFrame {
         client.setEnabled(!client.isEnabled());
     }
 
-    private void start(Version version, boolean decomp) {
+    private void start(Task task, boolean decomp) {
         App app = this;
         Thread thread = new Thread("Processor") {
             @Override
             public void run() {
-                Processor processor = new Processor(version, decomp, app);
+                Processor processor = new Processor(task, decomp, app);
                 processor.init();
             }
         };
@@ -173,8 +169,8 @@ public class App extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (e.getSource() == startButton) {
-                Version.Type type = server.isSelected() ? Version.Type.SERVER : Version.Type.CLIENT;
-                Version version = Version.getByVersion((String) versionBox.getSelectedItem(), type);
+                Version version = (Version) versionBox.getSelectedItem();
+                Task task = new Task(version, client.isSelected() ? Task.TaskType.CLIENT : Task.TaskType.SERVER);
                 if (!startButton.getText().equalsIgnoreCase("Start!")) return;
                 if (version == null) {
                     updateButton("INVALID VERSION!", Color.RED);
@@ -185,7 +181,7 @@ public class App extends JFrame {
                 } else {
                     boolean decomp = decompile.isSelected();
                     updateButton("Starting...", Color.BLUE);
-                    start(version, decomp);
+                    start(task, decomp);
                 }
             }
         }
