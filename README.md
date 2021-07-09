@@ -13,6 +13,8 @@ This tool will download the appropriate Minecraft server/client jar along with t
 then it will proceed to remap the jar and optionally decompile it. The decompile output will be a jar file.
 Simply unzip that jar file to find all your remapped/decompiled Minecraft code.
 
+This fork is modified to automatically find versions.
+
 ## Running
 Details for installing and running **McDeob** can be found on the [**WIKI**](https://github.com/ShaneBeeStudios/McDeob/wiki)
 
